@@ -19,6 +19,8 @@
     --site: #3B6EA5;
     --dna: #E7B53C;
     --protein: #C9CED6;
+    --copy1: #7FB2E5;
+    --copy2: #A48FE0;
   }
   * { box-sizing: border-box; }
   body {
@@ -61,6 +63,16 @@
     padding: 9px 16px; box-shadow: 2px 3px 0 rgba(31, 35, 40, 0.25);
     cursor: pointer;
   }
+  .card.wide { grid-column: 1 / -1; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 16px 18px 4px; }
+  .card-head h2 { margin: 0; }
+  .views { display: flex; gap: 8px; }
+  .view-button {
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--ink); background: #FFFFFF;
+    border: 2px solid var(--ink); border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  }
+  .view-button[aria-pressed="true"] { background: var(--ink); color: #FFFFFF; }
+  .card.wide model-viewer { height: min(70vh, 540px); }
   .caption { margin: 12px 18px 6px; font-size: 15.5px; }
   .key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 18px 16px; padding: 0; list-style: none; font-size: 14.5px; color: var(--muted); }
   .key li { display: flex; align-items: center; gap: 7px; }
@@ -78,12 +90,35 @@
   <p class="how">Drag to turn · pinch to zoom · tap <b>View in AR</b> to place the model on a table in front of you.</p>
 
   <div class="grid">
+    <section class="card wide">
+      <div class="card-head">
+        <h2><b>a</b>The enzyme</h2>
+        <div class="views" role="group" aria-label="Choose a view">
+          <button class="view-button" data-src="complex_cutaway.glb" data-orbit="20deg 60deg auto" aria-pressed="true">Cut open</button>
+          <button class="view-button" data-src="complex_dox.glb" data-orbit="0deg 75deg auto" aria-pressed="false">Whole enzyme</button>
+        </div>
+      </div>
+      <model-viewer id="enzyme" src="complex_cutaway.glb" poster="complex_cutaway.webp" alt="Topoisomerase IIβ holding DNA, front half cut away to show doxorubicin docked in the DNA"
+        camera-controls auto-rotate rotation-per-second="10deg" camera-orbit="20deg 60deg auto"
+        shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
+        ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" loading="eager">
+        <button slot="ar-button" class="ar-button">View in AR</button>
+      </model-viewer>
+      <p class="caption">Top2β is made of two identical copies (blue, lavender) that grip the DNA (gold) and cut both strands. DOX (coral) docks into the DNA at the cut site, deep inside the enzyme: <b>Cut open</b> removes the front half so you can see it.</p>
+      <ul class="key">
+        <li><span class="dot" style="background:var(--copy1)"></span>Top2β, copy 1</li>
+        <li><span class="dot" style="background:var(--copy2)"></span>Top2β, copy 2</li>
+        <li><span class="dot" style="background:var(--dna)"></span>DNA</li>
+        <li><span class="dot" style="background:var(--dox)"></span>DOX</li>
+      </ul>
+    </section>
+
     <section class="card">
-      <h2><b>a</b>Rigid docking</h2>
+      <h2><b>b</b>Rigid docking</h2>
       <model-viewer src="rigid_pair.glb" poster="rigid_pair.webp" alt="DOX–ICG pair docked as one rigid unit next to DNA in topoisomerase IIβ"
         camera-controls auto-rotate rotation-per-second="10deg" camera-target="0.023m 0.091m 0.081m" camera-orbit="55deg 72deg 0.3m"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
-        ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" loading="eager">
+        ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" loading="lazy">
         <button slot="ar-button" class="ar-button">View in AR</button>
       </model-viewer>
       <p class="caption">Docked as one rigid unit, the DOX–ICG pair lands away from the intercalation site: its DOX sits 17.6&nbsp;Å from where DOX docked on its own binds (blue).</p>
@@ -97,7 +132,7 @@
     </section>
 
     <section class="card">
-      <h2><b>b</b>Non-rigid docking</h2>
+      <h2><b>c</b>Non-rigid docking</h2>
       <model-viewer src="nonrigid_pair.glb" poster="nonrigid_pair.webp" alt="DOX intercalated in DNA with ICG docked next to it in topoisomerase IIβ"
         camera-controls auto-rotate rotation-per-second="10deg" camera-target="-0.004m 0.066m 0.048m" camera-orbit="0deg 75deg 0.26m"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
@@ -114,7 +149,21 @@
     </section>
   </div>
 
-  <footer>AutoDock Vina 1.2.5 poses in the Top2β–DNA cleavage complex (PDB 4G0V), drawn in UCSF ChimeraX. Only the protein within 8&nbsp;Å of the ligands is shown.</footer>
+  <footer>AutoDock Vina 1.2.5 poses in the Top2β–DNA cleavage complex (PDB 4G0V), drawn in UCSF ChimeraX. In b and c, only the protein within 8&nbsp;Å of the ligands is shown.</footer>
 </main>
+<script>
+  // the two buttons above card a swap the model shown (and used for AR)
+  const enzyme = document.getElementById("enzyme");
+  const viewButtons = document.querySelectorAll(".view-button");
+  for (const button of viewButtons) {
+    button.addEventListener("click", function () {
+      enzyme.src = button.dataset.src;
+      enzyme.cameraOrbit = button.dataset.orbit;
+      for (const other of viewButtons) {
+        other.setAttribute("aria-pressed", other === button ? "true" : "false");
+      }
+    });
+  }
+</script>
 </body>
 </html>
