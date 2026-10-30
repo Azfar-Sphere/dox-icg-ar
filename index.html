@@ -94,14 +94,14 @@
       <div class="card-head">
         <h2><b>a</b>The enzyme</h2>
         <div class="views" role="group" aria-label="Choose a view">
-          <button class="view-button" data-src="complex_dox.glb" data-orbit="0deg 75deg auto" aria-pressed="false">Whole enzyme</button>
           <button class="view-button" data-src="complex_cutaway.glb" data-orbit="20deg 60deg auto" aria-pressed="true">Cut open</button>
+          <button class="view-button" data-src="complex_dox.glb" data-orbit="0deg 75deg auto" aria-pressed="false">Whole enzyme</button>
         </div>
       </div>
       <model-viewer id="enzyme" src="complex_cutaway.glb" poster="complex_cutaway.webp" alt="Topoisomerase IIβ holding DNA, front half cut away to show doxorubicin docked in the DNA"
         camera-controls auto-rotate rotation-per-second="10deg" camera-orbit="20deg 60deg auto"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
-        ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" loading="eager">
+        ar ar-modes="scene-viewer webxr quick-look" ar-scale="auto" loading="eager">
         <button slot="ar-button" class="ar-button">View in AR</button>
       </model-viewer>
       <p class="caption">Top2β is made of two identical copies (blue, lavender) that grip the DNA (gold) and cut both strands. DOX (coral) docks into the DNA at the cut site, deep inside the enzyme: <b>Cut open</b> removes the front half so you can see it.</p>
@@ -118,7 +118,7 @@
       <model-viewer src="rigid_pair.glb" poster="rigid_pair.webp" alt="DOX–ICG pair docked as one rigid unit next to DNA in topoisomerase IIβ"
         camera-controls auto-rotate rotation-per-second="10deg" camera-target="0.023m 0.091m 0.081m" camera-orbit="55deg 72deg 0.3m"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
-        ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" loading="lazy">
+        ar ar-modes="scene-viewer webxr quick-look" ar-scale="auto" loading="lazy">
         <button slot="ar-button" class="ar-button">View in AR</button>
       </model-viewer>
       <p class="caption">Docked as one rigid unit, the DOX–ICG pair lands away from the intercalation site: its DOX sits 17.6&nbsp;Å from where DOX docked on its own binds (blue).</p>
@@ -136,7 +136,7 @@
       <model-viewer src="nonrigid_pair.glb" poster="nonrigid_pair.webp" alt="DOX intercalated in DNA with ICG docked next to it in topoisomerase IIβ"
         camera-controls auto-rotate rotation-per-second="10deg" camera-target="-0.004m 0.066m 0.048m" camera-orbit="0deg 75deg 0.26m"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
-        ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" loading="lazy">
+        ar ar-modes="scene-viewer webxr quick-look" ar-scale="auto" loading="lazy">
         <button slot="ar-button" class="ar-button">View in AR</button>
       </model-viewer>
       <p class="caption">DOX docked alone fits the intercalation site; ICG then docks next to it (−10.9&nbsp;kcal/mol) without a salt bridge (N–O 7.4&nbsp;Å).</p>
