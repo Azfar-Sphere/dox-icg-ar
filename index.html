@@ -21,6 +21,7 @@
     --protein: #C9CED6;
     --copy1: #7FB2E5;
     --copy2: #A48FE0;
+    --water: #A8CCEA;
   }
   * { box-sizing: border-box; }
   body {
@@ -79,6 +80,34 @@
   .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); flex: none; }
   .dot.protein { opacity: 0.6; }
   footer { margin-top: 26px; font-size: 13.5px; color: var(--muted); }
+
+  /* card d: the MD movie and its controls */
+  .movie {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #FFFFFF;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+  }
+  .movie video { display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+  .movie .missing {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center; text-align: center; padding: 16px;
+    font-size: 16px; color: var(--muted);
+  }
+  .movie.no-video .missing { display: flex; }
+  .movie.no-video video { visibility: hidden; }
+  .controls {
+    display: grid; gap: 12px 22px; align-items: center;
+    grid-template-columns: auto 1fr; margin: 14px 18px 4px;
+  }
+  @media (min-width: 820px) { .controls { grid-template-columns: auto 1fr 1fr; } }
+  .slider { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; font-size: 15px; }
+  .slider span { color: var(--muted); min-width: 3.2em; }   /* same width, so both sliders start in line */
+  .slider output { min-width: 7.2em; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .slider input { width: 100%; accent-color: var(--dox); }
+  #play { min-width: 5.5em; }
+  @media (max-width: 819px) { .controls .slider { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -147,9 +176,39 @@
         <li><span class="dot protein" style="background:var(--protein)"></span>Top2β (nearby)</li>
       </ul>
     </section>
+
+    <section class="card wide">
+      <div class="card-head">
+        <h2><b>d</b>Water meets the solid: 1&nbsp;µs of MD</h2>
+      </div>
+      <div class="movie" id="movie-box">
+        <video id="movie" src="slab_water.mp4" poster="slab_water.jpg" muted loop playsinline preload="metadata"
+          aria-label="Molecular dynamics movie: a slab of solid DOX and ICG with water above and below, over 1000 nanoseconds"></video>
+        <p class="missing">The movie (slab_water.mp4) is not in this folder yet.</p>
+      </div>
+      <div class="controls">
+        <button id="play" class="view-button" aria-pressed="false">Play</button>
+        <label class="slider" for="speed">
+          <span>Speed</span>
+          <input type="range" id="speed" min="0.25" max="4" step="0.25" value="1">
+          <output id="speed-value" for="speed">1×</output>
+        </label>
+        <label class="slider" for="time">
+          <span>Time</span>
+          <input type="range" id="time" min="0" max="1000" step="1" value="0">
+          <output id="time-value" for="time">0 ns</output>
+        </label>
+      </div>
+      <p class="caption">The [DOX][ICG] solid from our slab simulation, with water on both sides of it, over 1000&nbsp;ns (1&nbsp;µs). You are looking at a thin slice through the middle, so you can see inside the solid. Drag <b>Time</b> to jump through the run and <b>Speed</b> to slow it down or speed it up.</p>
+      <ul class="key">
+        <li><span class="dot" style="background:var(--dox)"></span>DOX</li>
+        <li><span class="dot" style="background:var(--icg)"></span>ICG</li>
+        <li><span class="dot" style="background:var(--water)"></span>water</li>
+      </ul>
+    </section>
   </div>
 
-  <footer>AutoDock Vina 1.2.5 poses in the Top2β–DNA cleavage complex (PDB 4G0V), drawn in UCSF ChimeraX. In b and c, only the protein within 8&nbsp;Å of the ligands is shown.</footer>
+  <footer>AutoDock Vina 1.2.5 poses in the Top2β–DNA cleavage complex (PDB 4G0V), drawn in UCSF ChimeraX. In b and c, only the protein within 8&nbsp;Å of the ligands is shown. In d: GROMACS 2025.3 simulation of 100 DOX + 100 ICG with water on both faces, one frame every 2&nbsp;ns, drawn in UCSF ChimeraX.</footer>
 </main>
 <script>
   // the two buttons above card a swap the model shown (and used for AR)
@@ -163,6 +222,111 @@
         other.setAttribute("aria-pressed", other === button ? "true" : "false");
       }
     });
+  }
+
+  // card d: the MD movie. The whole video is the whole run, so a point in the video is a
+  // point in simulated time: time in ns = (video time / video length) x 1000.
+  const SIMULATED_NS = 1000;
+  const movie = document.getElementById("movie");
+  const movieBox = document.getElementById("movie-box");
+  const playButton = document.getElementById("play");
+  const speedSlider = document.getElementById("speed");
+  const speedValue = document.getElementById("speed-value");
+  const timeSlider = document.getElementById("time");
+  const timeValue = document.getElementById("time-value");
+  let dragging = false;
+
+  function nsPerSecond() {
+    // simulated nanoseconds shown per second of watching, at the current speed
+    if (!movie.duration) {
+      return null;
+    }
+    return SIMULATED_NS / movie.duration * movie.playbackRate;
+  }
+
+  function showSpeed() {
+    const speed = Number(speedSlider.value);
+    const perSecond = nsPerSecond();
+    if (perSecond === null) {
+      speedValue.textContent = speed + "×";
+    } else {
+      speedValue.textContent = speed + "× · " + Math.round(perSecond) + " ns/s";
+    }
+  }
+
+  function showTime() {
+    if (!movie.duration || dragging) {
+      return;
+    }
+    const ns = movie.currentTime / movie.duration * SIMULATED_NS;
+    timeSlider.value = Math.round(ns);
+    timeValue.textContent = Math.round(ns) + " ns";
+  }
+
+  function keepShowingTime() {
+    // timeupdate only fires a few times a second; this keeps the label smooth while playing
+    showTime();
+    if (!movie.paused) {
+      requestAnimationFrame(keepShowingTime);
+    }
+  }
+
+  speedSlider.addEventListener("input", function () {
+    const speed = Number(speedSlider.value);
+    movie.defaultPlaybackRate = speed;      // some browsers reset playbackRate to this on a seek
+    movie.playbackRate = speed;
+    showSpeed();
+  });
+
+  timeSlider.addEventListener("input", function () {
+    dragging = true;
+    const ns = Number(timeSlider.value);
+    timeValue.textContent = ns + " ns";
+    if (movie.duration) {
+      movie.currentTime = ns / SIMULATED_NS * movie.duration;
+    }
+  });
+  timeSlider.addEventListener("change", function () { dragging = false; });
+
+  function togglePlay() {
+    if (movie.paused) {
+      movie.play();
+    } else {
+      movie.pause();
+    }
+  }
+  playButton.addEventListener("click", togglePlay);
+  movie.addEventListener("click", togglePlay);
+
+  movie.addEventListener("play", function () {
+    playButton.textContent = "Pause";
+    playButton.setAttribute("aria-pressed", "true");
+    requestAnimationFrame(keepShowingTime);
+  });
+  movie.addEventListener("pause", function () {
+    playButton.textContent = "Play";
+    playButton.setAttribute("aria-pressed", "false");
+  });
+  movie.addEventListener("loadedmetadata", function () { showSpeed(); showTime(); });
+  movie.addEventListener("timeupdate", showTime);
+  movie.addEventListener("error", function () {
+    movieBox.classList.add("no-video");     // file missing or not playable: say so instead
+    playButton.disabled = true;
+  });
+
+  // start playing when the card scrolls into view (unless the phone asks for less motion)
+  const lessMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if ("IntersectionObserver" in window && !lessMotion) {
+    const watcher = new IntersectionObserver(function (entries) {
+      for (const entry of entries) {
+        if (entry.isIntersecting && movie.paused) {
+          movie.play().catch(function () {});
+        } else if (!entry.isIntersecting && !movie.paused) {
+          movie.pause();
+        }
+      }
+    }, { threshold: 0.5 });
+    watcher.observe(movieBox);
   }
 </script>
 </body>
