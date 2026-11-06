@@ -124,7 +124,19 @@
   <div class="grid">
     <section class="card wide">
       <div class="card-head">
-        <h2><b>a</b>The enzyme</h2>
+        <h2><b>a</b>How DOX binds Top2β–DNA</h2>
+      </div>
+      <div class="movie" id="binding-box">
+        <!-- YouTube's player script replaces this div with the video player -->
+        <div id="binding-movie"></div>
+        <p class="missing">The animation could not load here.&nbsp;<a href="https://www.youtube.com/watch?v=S6euiIE7BaA" target="_blank" rel="noopener">Watch it on YouTube</a>.</p>
+      </div>
+      <p class="caption">An animation of how DOX binds the Top2β–DNA complex and traps it as a cleavage complex. You can also <a href="https://www.youtube.com/watch?v=S6euiIE7BaA" target="_blank" rel="noopener">watch it on YouTube</a>.</p>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head">
+        <h2><b>b</b>The enzyme</h2>
         <div class="views" role="group" aria-label="Choose a view">
           <button class="view-button" data-src="complex_dox.glb" data-orbit="0deg 75deg auto" aria-pressed="true">Whole enzyme</button>
           <button class="view-button" data-src="complex_cutaway.glb" data-orbit="20deg 60deg auto" aria-pressed="false">Cut open</button>
@@ -146,7 +158,7 @@
     </section>
 
     <section class="card">
-      <h2><b>b</b>Rigid docking</h2>
+      <h2><b>c</b>Rigid docking</h2>
       <model-viewer src="rigid_pair.glb" poster="rigid_pair.webp" alt="DOX–ICG pairs docked as one rigid unit at both cut sites of topoisomerase IIβ, away from where DOX docked on its own"
         camera-controls auto-rotate rotation-per-second="10deg" camera-orbit="0deg 75deg 0.54m"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
@@ -164,7 +176,7 @@
     </section>
 
     <section class="card">
-      <h2><b>c</b>Non-rigid docking</h2>
+      <h2><b>d</b>Non-rigid docking</h2>
       <model-viewer src="nonrigid_pair.glb" poster="nonrigid_pair.webp" alt="DOX intercalated in DNA with ICG docked next to it at both cut sites of topoisomerase IIβ"
         camera-controls auto-rotate rotation-per-second="10deg" camera-orbit="0deg 75deg 0.5m"
         shadow-intensity="0.6" exposure="1.05" tone-mapping="neutral" environment-image="neutral"
@@ -182,7 +194,7 @@
 
     <section class="card wide">
       <div class="card-head">
-        <h2><b>d</b>Water meets the solid: 1&nbsp;µs of MD</h2>
+        <h2><b>e</b>Water meets the solid: 1&nbsp;µs of MD</h2>
       </div>
       <div class="movie" id="movie-box">
         <!-- YouTube's player script replaces this div with the video player -->
@@ -211,7 +223,7 @@
     </section>
   </div>
 
-  <footer>AutoDock Vina 1.2.5 poses in the Top2β–DNA cleavage complex (PDB 4G0V), drawn in UCSF ChimeraX. In b and c, only the protein within 8&nbsp;Å of the ligands is shown. In d: GROMACS 2025.3 simulation of 100 DOX + 100 ICG with water on both faces, one frame every 2&nbsp;ns, drawn in UCSF ChimeraX.</footer>
+  <footer>AutoDock Vina 1.2.5 poses in the Top2β–DNA cleavage complex (PDB 4G0V), drawn in UCSF ChimeraX. In c and d, only the protein within 8&nbsp;Å of the ligands is shown. In e: GROMACS 2025.3 simulation of 100 DOX + 100 ICG with water on both faces, one frame every 2&nbsp;ns, drawn in UCSF ChimeraX.</footer>
 </main>
 <script>
   // the two buttons above card a swap the model shown (and used for AR)
@@ -227,7 +239,39 @@
     });
   }
 
-  // card d: the MD movie, played from YouTube. YouTube's IFrame Player API lets the Play, Speed
+  // card a: the binding animation, played from YouTube with YouTube's own controls only
+  // (it is an animation, not an MD run, so it has no Speed / Time sliders in nanoseconds)
+  const BINDING_ID = "S6euiIE7BaA";
+  const bindingBox = document.getElementById("binding-box");
+  let bindingPlayer = null;
+  let bindingReady = false;    // true once YouTube says this player can take commands
+
+  function makeBindingPlayer() {
+    bindingPlayer = new YT.Player("binding-movie", {
+      host: "https://www.youtube-nocookie.com",   // privacy-enhanced mode, as for the MD movie
+      videoId: BINDING_ID,
+      playerVars: {
+        controls: 1,
+        rel: 0,
+        playsinline: 1,
+        loop: 1,
+        playlist: BINDING_ID,     // YouTube only loops when the playlist is this same video
+      },
+      events: {
+        onReady: function () {
+          bindingReady = true;
+          bindingBox.classList.remove("no-video");   // a slow player that arrives late: show it
+          bindingPlayer.mute();                       // browsers only let a muted video start on its own
+          playWhenSeen(bindingBox, bindingPlayer);
+        },
+        onError: function () {
+          bindingBox.classList.add("no-video");      // could not play: show the YouTube link instead
+        },
+      },
+    });
+  }
+
+  // card e: the MD movie, played from YouTube. YouTube's IFrame Player API lets the Play, Speed
   // and Time controls below steer the player. The whole video is the whole run, so a point in the
   // video is a point in simulated time: time in ns = (video time / video length) x 1000.
   const VIDEO_ID = "OIcfYrK8FTs";
@@ -300,8 +344,13 @@
     playButton.disabled = true;
   }
 
-  // YouTube's script calls this function, by this exact name, once it has loaded
+  // YouTube's script calls this function, by this exact name, once it has loaded: make both players
   window.onYouTubeIframeAPIReady = function () {
+    makeBindingPlayer();
+    makeMdPlayer();
+  };
+
+  function makeMdPlayer() {
     player = new YT.Player("movie", {
       host: "https://www.youtube-nocookie.com",   // privacy-enhanced mode: no tracking cookies until play
       videoId: VIDEO_ID,
@@ -319,7 +368,7 @@
         onError: showMissing,
       },
     });
-  };
+  }
 
   function onPlayerReady() {
     ready = true;
@@ -334,7 +383,7 @@
     }
     showSpeed();
     showTime();
-    startWhenSeen();
+    playWhenSeen(movieBox, player);
   }
 
   function onPlayerStateChange(event) {
@@ -381,26 +430,31 @@
     }
   });
 
-  // start playing when the card scrolls into view (unless the phone asks for less motion)
-  function startWhenSeen() {
+  // start a movie when its card scrolls into view and pause it when it scrolls away (unless the
+  // phone asks for less motion). Used by both movies: box = the card's movie area, moviePlayer = its player.
+  function playWhenSeen(box, moviePlayer) {
     const lessMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!("IntersectionObserver" in window) || lessMotion) {
       return;
     }
     const watcher = new IntersectionObserver(function (entries) {
       for (const entry of entries) {
-        if (entry.isIntersecting && !isPlaying()) {
-          player.playVideo();
-        } else if (!entry.isIntersecting && isPlaying()) {
-          player.pauseVideo();
+        const playing = moviePlayer.getPlayerState() === YT.PlayerState.PLAYING;
+        if (entry.isIntersecting && !playing) {
+          moviePlayer.playVideo();
+        } else if (!entry.isIntersecting && playing) {
+          moviePlayer.pauseVideo();
         }
       }
     }, { threshold: 0.5 });
-    watcher.observe(movieBox);
+    watcher.observe(box);
   }
 
-  // if YouTube cannot be reached at all (offline, blocked), show the link after 10 seconds
+  // if YouTube cannot be reached at all (offline, blocked), show the links after 10 seconds
   setTimeout(function () {
+    if (!bindingReady) {
+      bindingBox.classList.add("no-video");
+    }
     if (!ready) {
       showMissing();
     }
