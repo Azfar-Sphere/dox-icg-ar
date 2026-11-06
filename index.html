@@ -323,6 +323,7 @@
 
   function onPlayerReady() {
     ready = true;
+    movieBox.classList.remove("no-video");  // a slow player that arrives after the 10 s message: show it
     player.mute();                          // browsers only let a muted video start on its own
     playButton.disabled = false;
     // YouTube offers a fixed list of speeds (usually 0.25× to 2×): fit the slider to that list
@@ -405,6 +406,8 @@
     }
   }, 10000);
 </script>
-<script src="https://www.youtube.com/iframe_api"></script>
+<!-- async: download YouTube's script without making the rest of the page wait for it. Without
+     it, a slow YouTube holds up everything after it, including the 3D viewer. -->
+<script src="https://www.youtube.com/iframe_api" async></script>
 </body>
 </html>
